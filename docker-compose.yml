@@ -1,0 +1,26 @@
+services:
+  student-service:
+    build: ./src/Student.Service
+    container_name: student-service
+    environment:
+      - ConnectionStrings__StudentDb=Data Source=/data/student.db
+    ports:
+      - "5101:8080"
+    volumes:
+      - student-data:/data
+    restart: unless-stopped
+
+  course-service:
+    build: ./src/Course.Service
+    container_name: course-service
+    environment:
+      - ConnectionStrings__CourseDb=Data Source=/data/course.db
+    ports:
+      - "5102:8080"
+    volumes:
+      - course-data:/data
+    restart: unless-stopped
+
+volumes:
+  student-data:
+  course-data:
