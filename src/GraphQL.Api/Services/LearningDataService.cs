@@ -4,9 +4,9 @@ using GraphQL.Api.Models;
 
 namespace GraphQL.Api.Services;
 
-// Logic gop du lieu tu Student.Service va Course.Service.
-// Tuan 3: cac resolver GraphQL se goi lai class nay.
-public sealed class LearningDataService(IStudentClient students, ICourseClient courses)
+// Logic gop du lieu tu Student.Service va Course.Service, cung cac thao tac ghi co day thong bao.
+// Tuan sau: cac resolver GraphQL se goi lai class nay.
+public sealed class LearningDataService(IStudentClient students, ICourseClient courses, IEventNotifier notifier)
 {
     // Sinh vien + cac dang ky hoc + thong tin tung hoc phan (truy van long nhau, gop tu 2 service)
     public async Task<StudentOverviewDto?> GetStudentOverviewAsync(
@@ -60,7 +60,7 @@ public sealed class LearningDataService(IStudentClient students, ICourseClient c
         return new CourseOverviewDto(course, details);
     }
 
-    // Dang ky hoc phan: kiem tra sinh vien o Student.Service roi moi ghi o Course.Service
+    // Dang ky hoc phan: kiem tra sinh vien o Student.Service, ghi o Course.Service, roi day thong bao
     public async Task<EnrollmentDto> EnrollStudentAsync(int studentId, int courseId, CancellationToken ct)
     {
         var student = await students.GetStudentAsync(studentId, ct)
@@ -74,6 +74,16 @@ public sealed class LearningDataService(IStudentClient students, ICourseClient c
                 HttpStatusCode.Conflict);
         }
 
-        return await courses.EnrollAsync(studentId, courseId, ct);
+        var enrollment = await courses.EnrollAsync(studentId, courseId, ct);
+        await notifier.EnrollmentCreatedAsync(enrollment, ct);
+        return enrollment;
+    }
+
+    // Cap nhat trang thai sinh vien o Student.Service, roi day thong bao
+    public async Task<StudentDto> UpdateStudentStatusAsync(int studentId, string? status, CancellationToken ct)
+    {
+        var student = await students.UpdateStatusAsync(studentId, status ?? "", ct);
+        await notifier.StudentStatusChangedAsync(student, ct);
+        return student;
     }
 }

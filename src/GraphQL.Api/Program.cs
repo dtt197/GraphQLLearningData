@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using GraphQL.Api.Clients;
+using GraphQL.Api.Hubs;
 using GraphQL.Api.Models;
 using GraphQL.Api.Services;
 
@@ -21,6 +22,8 @@ builder.Services.AddHttpClient<ICourseClient, HttpCourseClient>(client =>
     client.Timeout = TimeSpan.FromSeconds(5);
 });
 
+builder.Services.AddSignalR();
+builder.Services.AddSingleton<IEventNotifier, SignalREventNotifier>();
 builder.Services.AddScoped<LearningDataService>();
 
 var app = builder.Build();
@@ -59,7 +62,10 @@ app.MapGet("/", () => Results.Ok(new { service = "GraphQL.Api", status = "runnin
 
 app.MapGet("/health", () => Results.Ok(new { service = "GraphQL.Api", status = "healthy" }));
 
-// ---- Endpoint REST tam de kiem thu logic gop du lieu (tuan 3 thay bang POST /graphql) ----
+// Kenh thoi gian thuc
+app.MapHub<LearningHub>("/hubs/learning");
+
+// ---- Endpoint REST tam de kiem thu logic gop du lieu (tuan sau thay bang POST /graphql) ----
 
 app.MapGet("/api/students", async (string? status, IStudentClient students, CancellationToken ct) =>
     Results.Ok(await students.GetStudentsAsync(status, ct)));
@@ -86,8 +92,8 @@ app.MapGet("/api/courses/{id:int}/overview", async (
 });
 
 app.MapPatch("/api/students/{id:int}/status", async (
-    int id, UpdateStudentStatusRequest request, IStudentClient students, CancellationToken ct) =>
-    Results.Ok(await students.UpdateStatusAsync(id, request.Status ?? "", ct)));
+    int id, UpdateStudentStatusRequest request, LearningDataService service, CancellationToken ct) =>
+    Results.Ok(await service.UpdateStudentStatusAsync(id, request.Status, ct)));
 
 app.MapPost("/api/enrollments", async (
     EnrollStudentRequest request, LearningDataService service, CancellationToken ct) =>
