@@ -1,0 +1,65 @@
+@gateway = http://localhost:5100
+
+### Gateway: health
+GET {{gateway}}/health
+
+### Danh sach sinh vien dang hoc
+GET {{gateway}}/api/students?status=active
+
+### Tong hop: sinh vien 1 + cac dang ky + hoc phan
+GET {{gateway}}/api/students/1/overview
+
+### Tong hop, loc theo hoc ky
+GET {{gateway}}/api/students/1/overview?semester=2026-1
+
+### Tong hop, loc theo trang thai dang ky
+GET {{gateway}}/api/students/1/overview?status=completed
+
+### Tong hop: hoc phan 1 + sinh vien da dang ky
+GET {{gateway}}/api/courses/1/overview
+
+### Loi 404: sinh vien khong ton tai
+GET {{gateway}}/api/students/999/overview
+
+### Cap nhat trang thai sinh vien
+PATCH {{gateway}}/api/students/3/status
+Content-Type: application/json
+
+{
+  "status": "active"
+}
+
+### Loi 400: trang thai khong hop le
+PATCH {{gateway}}/api/students/3/status
+Content-Type: application/json
+
+{
+  "status": "abc"
+}
+
+### Dang ky hoc phan hop le (chay lan 2 se bi 409)
+POST {{gateway}}/api/enrollments
+Content-Type: application/json
+
+{
+  "studentId": 2,
+  "courseId": 2
+}
+
+### Loi 409: sinh vien da tot nghiep
+POST {{gateway}}/api/enrollments
+Content-Type: application/json
+
+{
+  "studentId": 5,
+  "courseId": 2
+}
+
+### Loi 404: hoc phan khong ton tai
+POST {{gateway}}/api/enrollments
+Content-Type: application/json
+
+{
+  "studentId": 1,
+  "courseId": 999
+}
