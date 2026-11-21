@@ -2,6 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/Course.Service/Course.Service.csproj" />
     <Project Path="src/GraphQL.Api/GraphQL.Api.csproj" />
+    <Project Path="src/Learning.Client/Learning.Client.csproj" />
     <Project Path="src/Student.Service/Student.Service.csproj" />
   </Folder>
 </Solution>
