@@ -78,6 +78,28 @@ app.MapGet("/api/courses", async (string? semester, CourseDbContext db) =>
     return Results.Ok(courses.Select(CourseDto.From));
 });
 
+// GET /api/courses/by-ids?ids=1,2,3  (gateway dung de gop du lieu)
+app.MapGet("/api/courses/by-ids", async (string ids, CourseDbContext db) =>
+{
+    var parsed = ids
+        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        .Select(x => int.TryParse(x, out var value) ? value : (int?)null)
+        .ToList();
+
+    if (parsed.Count == 0 || parsed.Any(x => x is null))
+    {
+        return Results.BadRequest(new ApiError("INVALID_IDS", "ids phai la danh sach so nguyen, vi du 1,2,3."));
+    }
+
+    var wanted = parsed.Select(x => x!.Value).Distinct().ToList();
+    var courses = await db.Courses.AsNoTracking()
+        .Where(c => wanted.Contains(c.Id))
+        .OrderBy(c => c.Id)
+        .ToListAsync();
+
+    return Results.Ok(courses.Select(CourseDto.From));
+});
+
 app.MapGet("/api/courses/{id:int}", async (int id, CourseDbContext db) =>
 {
     var course = await db.Courses.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id);
